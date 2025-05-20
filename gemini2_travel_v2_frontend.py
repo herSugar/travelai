@@ -236,246 +236,907 @@
 #                     mime="text/markdown"
 #                 )
 
+# ======================================================================================================================
+
+# import streamlit as st
+# import requests
+# from datetime import datetime, timedelta
+# import json
+
+# # API URLs
+# API_BASE_URL = "http://localhost:8000"
+# CHAT_API_URL = f"{API_BASE_URL}/chat/"
+# RESET_API_URL = f"{API_BASE_URL}/start_over/"
+
+# # Page configuration
+# st.set_page_config(
+#     page_title="✈️ Asia Travel Chatbot",
+#     page_icon="🗾",
+#     layout="wide",
+#     initial_sidebar_state="expanded"
+# )
+
+# # Initialize chat history
+# if "messages" not in st.session_state:
+#     st.session_state.messages = [
+#         {"role": "assistant", "content": "Hello! I'm your Asia Travel Assistant. Where in Asia would you like to visit?"}
+#     ]
+
+# # Initialize form state
+# if "show_form" not in st.session_state:
+#     st.session_state.show_form = False
+
+# # Sidebar for additional options
+# with st.sidebar:
+#     st.title("⚙️ Chat Options")
+#     st.markdown("---")
+#     if st.button("🔄 Start New Conversation"):
+#         try:
+#             response = requests.post(RESET_API_URL)
+#             if response.status_code == 200:
+#                 st.session_state.messages = [
+#                     {"role": "assistant", "content": "Let's start over! Where in Asia would you like to visit?"}
+#                 ]
+#                 st.session_state.show_form = False
+#                 st.rerun()
+#         except Exception as e:
+#             st.error(f"Error resetting conversation: {str(e)}")
+    
+#     st.markdown("---")
+#     st.caption("Asia Travel Chatbot v2.0")
+#     st.caption("Specializing in Asian destinations")
+
+# # Main header
+# st.title("🗾 Asia Travel Chatbot")
+# st.markdown("Plan your perfect Asian adventure with our AI assistant!")
+
+# # Display chat messages
+# for message in st.session_state.messages:
+#     with st.chat_message(message["role"]):
+#         st.markdown(message["content"])
+
+#         # Display flight/hotel cards if present in message
+#         if "flights" in message:
+#             with st.expander("✈️ Flight Options"):
+#                 for flight in message["flights"][:3]:
+#                     st.markdown(f"""
+#                     **{flight['airline']}**  
+#                     🕒 {flight['departure']} → {flight['arrival']}  
+#                     ⏱️ {flight['duration']} • 🛑 {flight['stops']}  
+#                     💰 ${flight['price']}  
+#                     {'🇦🇸 Asian airline' if flight['is_asian'] else ''}
+#                     """)
+#                     st.markdown("---")
+        
+#         if "hotels" in message:
+#             with st.expander("🏨 Hotel Options"):
+#                 for hotel in message["hotels"][:3]:
+#                     st.markdown(f"""
+#                     **{hotel['name']}**  
+#                     ⭐ {hotel['rating']}/10 • 💰 ${hotel['price']}/night  
+#                     📍 {hotel['location']}  
+#                     {'🏯 Asian hospitality' if hotel['asian_hospitality'] else ''}
+#                     """)
+#                     st.markdown("---")
+
+# # Chat input
+# if prompt := st.chat_input("Type your message..."):
+#     # Add user message to chat history
+#     st.session_state.messages.append({"role": "user", "content": prompt})
+    
+#     # Display user message in chat message container
+#     with st.chat_message("user"):
+#         st.markdown(prompt)
+    
+#     # Show assistant response
+#     with st.chat_message("assistant"):
+#         message_placeholder = st.empty()
+#         full_response = ""
+        
+#         # Prepare chat request
+#         chat_request = {
+#             "conversation": st.session_state.messages[:-1],  # All except the last user message
+#             "current_input": prompt
+#         }
+        
+#         try:
+#             with st.spinner("Thinking..."):
+#                 response = requests.post(CHAT_API_URL, json=chat_request)
+                
+#                 if response.status_code == 200:
+#                     result = response.json()
+#                     full_response = result["response"]
+                    
+#                     # Display response incrementally
+#                     message_placeholder.markdown(full_response + "▌")
+#                     message_placeholder.markdown(full_response)
+                    
+#                     # Add to chat history
+#                     new_message = {"role": "assistant", "content": full_response}
+                    
+#                     # Check if we need to show the travel form
+#                     if "needs_more_info" in result and result["needs_more_info"]:
+#                         st.session_state.show_form = True
+                    
+#                     # Add any suggestions as quick replies
+#                     if "suggestions" in result and result["suggestions"]:
+#                         with st.container():
+#                             st.write("Quick suggestions:")
+#                             cols = st.columns(len(result["suggestions"]))
+#                             for i, suggestion in enumerate(result["suggestions"]):
+#                                 with cols[i]:
+#                                     if st.button(suggestion):
+#                                         # Add the suggestion as a user message
+#                                         st.session_state.messages.append({"role": "user", "content": suggestion})
+#                                         st.rerun()
+                    
+#                     st.session_state.messages.append(new_message)
+                
+#                 else:
+#                     error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
+#                     message_placeholder.error(error_msg)
+#                     st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        
+#         except Exception as e:
+#             error_msg = f"Sorry, I encountered an error: {str(e)}"
+#             message_placeholder.error(error_msg)
+#             st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+# # Travel details form (shown when needed)
+# if st.session_state.show_form:
+#     with st.form(key="travel_details_form"):
+#         st.subheader("✈️ Tell me more about your trip")
+        
+#         cols = st.columns(2)
+#         with cols[0]:
+#             destination = st.text_input("Asian destination you want to visit", "Tokyo")
+#             origin = st.text_input("Your departure city", "Jakarta")
+            
+#             # Set default dates
+#             today = datetime.now()
+#             next_month = today + timedelta(days=30)
+            
+#             travel_dates = st.date_input(
+#                 "When will you travel?",
+#                 (today, next_month),
+#                 format="MM/DD/YYYY"
+#             )
+        
+#         with cols[1]:
+#             interests = st.multiselect(
+#                 "What are you interested in?",
+#                 ["Cultural sites", "Beaches", "Shopping", "Food", "Nature", "Adventure"],
+#                 ["Cultural sites", "Food"]
+#             )
+            
+#             budget = st.select_slider(
+#                 "Your budget level",
+#                 options=["Budget", "Mid-range", "Luxury"],
+#                 value="Mid-range"
+#             )
+        
+#         submitted = st.form_submit_button("Plan My Trip")
+        
+#         if submitted:
+#             if len(travel_dates) != 2:
+#                 st.error("Please select both departure and return dates")
+#             else:
+#                 # Prepare travel plan
+#                 travel_plan = {
+#                     "destination": destination,
+#                     "origin": origin,
+#                     "departure_date": str(travel_dates[0]),
+#                     "return_date": str(travel_dates[1]),
+#                     "interests": interests,
+#                     "budget": budget
+#                 }
+                
+#                 # Add to chat history
+#                 st.session_state.messages.append({
+#                     "role": "user",
+#                     "content": f"I want to visit {destination} from {travel_dates[0]} to {travel_dates[1]}. My interests are {', '.join(interests)} and my budget is {budget}."
+#                 })
+                
+#                 # Show assistant is thinking
+#                 with st.chat_message("assistant"):
+#                     message_placeholder = st.empty()
+#                     message_placeholder.markdown("Searching for the best Asian travel options...▌")
+                    
+#                     try:
+#                         # Call API to get travel recommendations
+#                         chat_request = {
+#                             "conversation": st.session_state.messages,
+#                             "current_input": json.dumps(travel_plan)
+#                         }
+                        
+#                         response = requests.post(CHAT_API_URL, json=chat_request)
+                        
+#                         if response.status_code == 200:
+#                             result = response.json()
+#                             full_response = result["response"]
+                            
+#                             # Display the response
+#                             message_placeholder.markdown(full_response)
+                            
+#                             # Add to chat history
+#                             new_message = {"role": "assistant", "content": full_response}
+                            
+#                             # Add any data cards
+#                             if "flights" in result:
+#                                 new_message["flights"] = result["flights"]
+                            
+#                             if "hotels" in result:
+#                                 new_message["hotels"] = result["hotels"]
+                            
+#                             st.session_state.messages.append(new_message)
+#                             st.session_state.show_form = False
+#                             st.rerun()
+                        
+#                         else:
+#                             error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
+#                             message_placeholder.error(error_msg)
+#                             st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                    
+#                     except Exception as e:
+#                         error_msg = f"Sorry, I encountered an error: {str(e)}"
+#                         message_placeholder.error(error_msg)
+#                         st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                        
+# =====================================================================================================================
+
+# import streamlit as st
+# import requests
+# from datetime import datetime, timedelta
+# import json
+
+# # API configuration
+# API_BASE_URL = "http://localhost:8000"
+# CHAT_API_URL = f"{API_BASE_URL}/chat/"
+# FLIGHT_API_URL = f"{API_BASE_URL}/search_flights/"
+# HOTEL_API_URL = f"{API_BASE_URL}/search_hotels/"
+# COMPLETE_API_URL = f"{API_BASE_URL}/complete_search/"
+# # RESET_API_URL = f"{API_BASE_URL}/start_over/"
+
+# # Page configuration
+# st.set_page_config(
+#     page_title="✈️ AI Travel Assistant",
+#     page_icon="🗺️",
+#     layout="wide",
+#     initial_sidebar_state="expanded"
+# )
+
+# # Initialize session state
+# if "messages" not in st.session_state:
+#     st.session_state.messages = [
+#         {"role": "assistant", "content": "Hello! I'm your AI Travel Assistant. Where would you like to go?"}
+#     ]
+
+# if "show_form" not in st.session_state:
+#     st.session_state.show_form = False
+
+# # Sidebar
+# with st.sidebar:
+#     st.title("⚙️ Travel Options")
+#     search_mode = st.radio(
+#         "Search Mode",
+#         ["Chat Mode", "Quick Search (Flights + Hotels)"],
+#         index=0
+#     )
+    
+#     st.markdown("---")
+#     if st.button("🔄 Start New Conversation"):
+#         try:
+#             response = requests.post(RESET_API_URL)
+#             if response.status_code == 200:
+#                 st.session_state.messages = [
+#                     {"role": "assistant", "content": "Let's start over! Where would you like to go?"}
+#                 ]
+#                 st.session_state.show_form = False
+#                 st.rerun()
+#         except Exception as e:
+#             st.error(f"Error: {str(e)}")
+    
+#     st.markdown("---")
+#     st.caption("AI Travel Assistant v2.0")
+#     st.caption("© 2024 Travel AI Solutions")
+
+# # Main interface
+# st.title("🤖 AI Travel Assistant")
+# st.markdown("Plan your perfect trip with our AI assistant!")
+
+# # Display chat messages
+# for message in st.session_state.messages:
+#     with st.chat_message(message["role"]):
+#         st.markdown(message["content"])
+        
+#         # Display any cards or expanders
+#         if "flights" in message:
+#             with st.expander("✈️ Flight Options"):
+#                 for flight in message["flights"][:3]:
+#                     st.markdown(f"""
+#                     **{flight['airline']}**  
+#                     🕒 {flight['departure']} → {flight['arrival']}  
+#                     ⏱️ {flight['duration']} • 🛑 {flight['stops']}  
+#                     💰 ${flight['price']}  
+#                     {'🇦🇸 Asian airline' if flight.get('is_asian_airline') else ''}
+#                     """)
+#                     st.markdown("---")
+        
+#         if "hotels" in message:
+#             with st.expander("🏨 Hotel Options"):
+#                 for hotel in message["hotels"][:3]:
+#                     st.markdown(f"""
+#                     **{hotel['name']}**  
+#                     ⭐ {hotel['rating']}/10 • 💰 ${hotel['price']}/night  
+#                     📍 {hotel['location']}  
+#                     {'🏯 Asian hospitality' if hotel.get('asian_hospitality') else ''}
+#                     """)
+#                     st.markdown("---")
+
+# # Chat input
+# if prompt := st.chat_input("Type your message..."):
+#     # Add user message to chat history
+#     st.session_state.messages.append({"role": "user", "content": prompt})
+    
+#     # Display user message
+#     with st.chat_message("user"):
+#         st.markdown(prompt)
+    
+#     # Show assistant response
+#     with st.chat_message("assistant"):
+#         message_placeholder = st.empty()
+#         full_response = ""
+        
+#         if search_mode == "Chat Mode":
+#             # Prepare chat request
+#             # chat_request = {
+#             #     "conversation": st.session_state.messages[:-1],
+#             #     "current_input": prompt
+#             # }
+#             chat_request = {
+#                 "message": prompt,
+#                 "context": st.session_state.get("context", {})
+#             }
+            
+#             try:
+#                 with st.spinner("Thinking..."):
+#                     response = requests.post(CHAT_API_URL, json=chat_request)
+                    
+#                     if response.status_code == 200:
+#                         result = response.json()
+#                         full_response = result["response"]
+                        
+#                         # Display response
+#                         message_placeholder.markdown(full_response)
+                        
+#                         # Add to chat history
+#                         new_message = {"role": "assistant", "content": full_response}
+                        
+#                         # Check if we need to show the travel form
+#                         if result.get("needs_more_info", False):
+#                             st.session_state.show_form = True
+                        
+#                         # Add any suggestions as quick replies
+#                         if result.get("suggestions"):
+#                             st.write("Quick suggestions:")
+#                             cols = st.columns(len(result["suggestions"]))
+#                             for i, suggestion in enumerate(result["suggestions"]):
+#                                 with cols[i]:
+#                                     if st.button(suggestion):
+#                                         st.session_state.messages.append({"role": "user", "content": suggestion})
+#                                         st.rerun()
+                        
+#                         st.session_state.messages.append(new_message)
+                    
+#                     else:
+#                         error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
+#                         message_placeholder.error(error_msg)
+#                         st.session_state.messages.append({"role": "assistant", "content": error_msg})
+            
+#             except Exception as e:
+#                 error_msg = f"Sorry, I encountered an error: {str(e)}"
+#                 message_placeholder.error(error_msg)
+#                 st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        
+#         else:  # Quick Search mode
+#             st.session_state.show_form = True
+#             message_placeholder.info("Please fill out the travel details below")
+
+# # Travel details form (shown when needed)
+# if st.session_state.show_form:
+#     with st.form(key="travel_details_form"):
+#         st.subheader("✈️ Travel Details")
+        
+#         cols = st.columns(2)
+#         with cols[0]:
+#             origin = st.text_input("Departure City (IATA code)", "CGK")
+#             destination = st.text_input("Destination City", "Tokyo")
+            
+#             # Set default dates
+#             today = datetime.now()
+#             next_week = today + timedelta(days=7)
+            
+#             outbound_date = st.date_input("Departure Date", today)
+#             return_date = st.date_input("Return Date", next_week)
+        
+#         with cols[1]:
+#             st.subheader("🏨 Hotel Options")
+#             check_in_date = st.date_input("Check-In Date", outbound_date)
+#             check_out_date = st.date_input("Check-Out Date", return_date)
+#             min_rating = st.slider("Minimum Hotel Rating", 0.0, 5.0, 4.0, 0.5)
+        
+#         submitted = st.form_submit_button("🔍 Search for Options")
+        
+#         if submitted:
+#             if outbound_date >= return_date:
+#                 st.error("Return date must be after departure date")
+#             elif check_in_date >= check_out_date:
+#                 st.error("Check-out date must be after check-in date")
+#             else:
+#                 with st.spinner("Searching for travel options..."):
+#                     try:
+#                         flight_request = {
+#                             "origin": origin,
+#                             "destination": destination,
+#                             "outbound_date": str(outbound_date),
+#                             "return_date": str(return_date)
+#                         }
+                        
+#                         hotel_request = {
+#                             "location": destination,
+#                             "check_in_date": str(check_in_date),
+#                             "check_out_date": str(check_out_date),
+#                             "min_rating": min_rating
+#                         }
+                        
+#                         complete_request = {
+#                             "flight_request": flight_request,
+#                             "hotel_request": hotel_request
+#                         }
+                        
+#                         response = requests.post(COMPLETE_API_URL, json=complete_request)
+                        
+#                         if response.status_code == 200:
+#                             result = response.json()
+                            
+#                             # Format response
+#                             response_text = f"Here are travel options for your trip to {destination}:\n\n"
+                            
+#                             if result.get("flights"):
+#                                 response_text += "**✈️ Flight Options:**\n"
+#                                 for flight in result["flights"][:3]:
+#                                     response_text += (
+#                                         f"- {flight['airline']}: {flight['departure']} to {flight['arrival']} "
+#                                         f"(Duration: {flight['duration']}, Price: ${flight['price']})\n"
+#                                     )
+                            
+#                             if result.get("hotels"):
+#                                 response_text += "\n**🏨 Hotel Options:**\n"
+#                                 for hotel in result["hotels"][:3]:
+#                                     response_text += (
+#                                         f"- {hotel['name']}: ${hotel['price']}/night, Rating: {hotel['rating']}\n"
+#                                     )
+                            
+#                             if result.get("ai_flight_recommendation"):
+#                                 response_text += f"\n**AI Flight Recommendation:**\n{result['ai_flight_recommendation']}\n"
+                            
+#                             if result.get("ai_hotel_recommendation"):
+#                                 response_text += f"\n**AI Hotel Recommendation:**\n{result['ai_hotel_recommendation']}\n"
+                            
+#                             if result.get("itinerary"):
+#                                 response_text += f"\n**📅 Suggested Itinerary:**\n{result['itinerary']}\n"
+                            
+#                             # Add to chat history
+#                             st.session_state.messages.append({
+#                                 "role": "assistant",
+#                                 "content": response_text,
+#                                 "flights": result.get("flights", []),
+#                                 "hotels": result.get("hotels", [])
+#                             })
+                            
+#                             st.session_state.show_form = False
+#                             st.rerun()
+                        
+#                         else:
+#                             error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
+#                             st.error(error_msg)
+#                             st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                    
+#                     except Exception as e:
+#                         error_msg = f"An error occurred: {str(e)}"
+#                         st.error(error_msg)
+#                         st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+# ===================================================================================================================================
+
 import streamlit as st
 import requests
 from datetime import datetime, timedelta
-import json
+from streamlit.components.v1 import html
 
-# API URLs
+# API configuration
 API_BASE_URL = "http://localhost:8000"
 CHAT_API_URL = f"{API_BASE_URL}/chat/"
-RESET_API_URL = f"{API_BASE_URL}/start_over/"
+FLIGHT_API_URL = f"{API_BASE_URL}/search_flights/"
+HOTEL_API_URL = f"{API_BASE_URL}/search_hotels/"
+COMPLETE_API_URL = f"{API_BASE_URL}/complete_search/"
+DESTINATION_API_URL = f"{API_BASE_URL}/search_destination/"
 
 # Page configuration
 st.set_page_config(
-    page_title="✈️ Asia Travel Chatbot",
-    page_icon="🗾",
+    page_title="✈️ AI Travel Assistant",
+    page_icon="🗺️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Initialize chat history
+# Custom CSS for better styling
+st.markdown("""
+<style>
+    /* Main chat container */
+    .stChatMessage {
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    
+    /* Assistant message bubble */
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+        background-color: #1a2a3a;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #4682b4;
+    }
+    
+    /* User message bubble */
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+        background-color: #1a2a3a;
+        padding: 1.5rem;
+        border-radius: 15px;
+    }
+    
+    /* Buttons */
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background-color: #1a2a3a;
+    }
+    
+    /* Expanders */
+    .stExpander {
+        background-color: white;
+        border: 1px solid #e1e4e8;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    /* Adjust avatar alignment */
+    [data-testid="stChatMessage"] [data-testid="stImage"] {
+        align-self: flex-start;
+        margin-top: 12px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Loading animation component
+def loading_animation():
+    html("""
+    <div style='display:flex;justify-content:center;margin:1rem;'>
+        <lottie-player src='https://assets10.lottiefiles.com/packages/lf20_raiw2hpe.json' 
+         background='transparent' speed='1' style='width:200px;height:200px' loop autoplay>
+        </lottie-player>
+    </div>
+    """, height=220)
+
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! I'm your Asia Travel Assistant. Where in Asia would you like to visit?"}
+        {"role": "assistant", "content": "Hello! I'm your AI Travel Assistant. Where would you like to go?"}
     ]
 
-# Initialize form state
 if "show_form" not in st.session_state:
     st.session_state.show_form = False
 
-# Sidebar for additional options
+if "context" not in st.session_state:
+    st.session_state.context = {}
+
+# Sidebar
 with st.sidebar:
-    st.title("⚙️ Chat Options")
-    st.markdown("---")
-    if st.button("🔄 Start New Conversation"):
-        try:
-            response = requests.post(RESET_API_URL)
-            if response.status_code == 200:
-                st.session_state.messages = [
-                    {"role": "assistant", "content": "Let's start over! Where in Asia would you like to visit?"}
-                ]
-                st.session_state.show_form = False
-                st.rerun()
-        except Exception as e:
-            st.error(f"Error resetting conversation: {str(e)}")
+    st.title("⚙️ Travel Options")
+    search_mode = st.radio(
+        "Search Mode",
+        ["Chat Mode", "Quick Search (Flights + Hotels)"],
+        index=0
+    )
     
     st.markdown("---")
-    st.caption("Asia Travel Chatbot v2.0")
-    st.caption("Specializing in Asian destinations")
+    if st.button("🔄 Start New Conversation"):
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Let's start over! Where would you like to go?"}
+        ]
+        st.session_state.show_form = False
+        st.session_state.context = {}
+        st.rerun()
+    
+    st.markdown("---")
+    st.caption("AI Travel Assistant v2.0")
+    st.caption("© 2024 Travel AI Solutions")
 
-# Main header
-st.title("🗾 Asia Travel Chatbot")
-st.markdown("Plan your perfect Asian adventure with our AI assistant!")
+# Main interface
+st.title("🤖 AI Travel Assistant")
+st.markdown("Plan your perfect trip with our AI assistant!")
 
 # Display chat messages
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    if message["role"] == "assistant":
+        with st.chat_message("assistant", avatar="🗺️"):
+            st.markdown(f"""
+            <div style='background-color:#1a2a3a;padding:1.5rem;border-radius:15px;border-left:4px solid #4682b4;'>
+                {message["content"]}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Display flight options if available
+            if "flights" in message and isinstance(message["flights"], list) and len(message["flights"]) > 0:
+                with st.expander(f"✈️ {len(message['flights'])} Flight Options"):
+                    for flight in message["flights"][:3]:
+                        st.markdown(f"""
+                        **{flight.get('airline', 'Unknown Airline')}**  
+                        🕒 {flight.get('departure', 'N/A')} → {flight.get('arrival', 'N/A')}  
+                        ⏱️ {flight.get('duration', 'N/A')} • 🛑 {flight.get('stops', 'N/A')}  
+                        💰 ${flight.get('price', 'N/A')}  
+                        """)
+                        st.markdown("---")
+            
+            # Display hotel options if available
+            if "hotels" in message and isinstance(message["hotels"], list) and len(message["hotels"]) > 0:
+                with st.expander(f"🏨 {len(message['hotels'])} Hotel Options"):
+                    for hotel in message["hotels"][:3]:
+                        st.markdown(f"""
+                        **{hotel.get('name', 'Unknown Hotel')}**  
+                        ⭐ {hotel.get('rating', 'N/A')} • 💰 ${hotel.get('price', 'N/A')}/night  
+                        📍 {hotel.get('location', 'N/A')}  
+                        🔗 [More Info]({hotel.get('link', '#')})
+                        """)
+                        st.markdown("---")
+            
+            # Display destination info if available
+            if "destination_info" in message and message["destination_info"]:
+                info = message["destination_info"]
+                with st.expander(f"🌍 About {info.get('name', 'this destination')}"):
+                    if info.get('description'):
+                        st.markdown(info['description'])
+                        st.markdown("---")
+                    if info.get('attractions'):
+                        st.markdown(f"**⭐ Top Attractions:** {', '.join(info['attractions'][:3])}")
+                    if info.get('best_time_to_visit'):
+                        st.markdown(f"**📅 Best Time to Visit:** {info['best_time_to_visit']}")
+                    if info.get('local_cuisine'):
+                        st.markdown(f"**🍽️ Local Cuisine:** {', '.join(info['local_cuisine'][:3])}")
+    else:
+        with st.chat_message("user"):
+            st.markdown(message["content"])
 
-        # Display flight/hotel cards if present in message
-        if "flights" in message:
-            with st.expander("✈️ Flight Options"):
-                for flight in message["flights"][:3]:
-                    st.markdown(f"""
-                    **{flight['airline']}**  
-                    🕒 {flight['departure']} → {flight['arrival']}  
-                    ⏱️ {flight['duration']} • 🛑 {flight['stops']}  
-                    💰 ${flight['price']}  
-                    {'🇦🇸 Asian airline' if flight['is_asian'] else ''}
-                    """)
-                    st.markdown("---")
-        
-        if "hotels" in message:
-            with st.expander("🏨 Hotel Options"):
-                for hotel in message["hotels"][:3]:
-                    st.markdown(f"""
-                    **{hotel['name']}**  
-                    ⭐ {hotel['rating']}/10 • 💰 ${hotel['price']}/night  
-                    📍 {hotel['location']}  
-                    {'🏯 Asian hospitality' if hotel['asian_hospitality'] else ''}
-                    """)
-                    st.markdown("---")
+# Quick action buttons
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
+    st.write("Quick actions:")
+    cols = st.columns(3)
+    with cols[0]:
+        if st.button("🌍 Get destination info", help="Learn more about this destination"):
+            st.session_state.messages.append({"role": "user", "content": "Tell me more about this destination"})
+            st.rerun()
+    with cols[1]:
+        if st.button("✈️ Find flights", help="Search for flight options"):
+            st.session_state.messages.append({"role": "user", "content": "Show me flight options"})
+            st.rerun()
+    with cols[2]:
+        if st.button("🏨 Find hotels", help="Search for hotel options"):
+            st.session_state.messages.append({"role": "user", "content": "Show me hotel options"})
+            st.rerun()
 
 # Chat input
 if prompt := st.chat_input("Type your message..."):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     
-    # Display user message in chat message container
+    # Display user message
     with st.chat_message("user"):
         st.markdown(prompt)
     
     # Show assistant response
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🗺️"):
         message_placeholder = st.empty()
-        full_response = ""
         
-        # Prepare chat request
-        chat_request = {
-            "conversation": st.session_state.messages[:-1],  # All except the last user message
-            "current_input": prompt
-        }
+        if search_mode == "Chat Mode":
+            try:
+                with st.spinner(""):
+                    loading_animation()
+                    
+                    # Prepare chat request
+                    chat_request = {
+                        "message": prompt,
+                        "context": st.session_state.context
+                    }
+                    
+                    # Make API call
+                    response = requests.post(CHAT_API_URL, json=chat_request)
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        
+                        # Display main response
+                        message_placeholder.markdown(f"""
+                        <div style='background-color:#1a2a3a;padding:1.5rem;border-radius:15px;border-left:4px solid #4682b4;'>
+                            {result.get('chat_response', 'I encountered an error processing your request.')}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Update context
+                        if "context" in result:
+                            st.session_state.context = result["context"]
+                        
+                        # Create assistant message with all data
+                        assistant_message = {
+                            "role": "assistant",
+                            "content": result.get("chat_response", "")
+                        }
+                        
+                        # Add any additional data to the message
+                        if "flights" in result and result["flights"]:
+                            assistant_message["flights"] = result["flights"]
+                        if "hotels" in result and result["hotels"]:
+                            assistant_message["hotels"] = result["hotels"]
+                        if "destination_info" in result and result["destination_info"]:
+                            assistant_message["destination_info"] = result["destination_info"]
+                        
+                        st.session_state.messages.append(assistant_message)
+                        
+                        # Check if we should show the travel form
+                        if result.get("needs_details", False):
+                            st.session_state.show_form = True
+                    
+                    else:
+                        error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
+                        message_placeholder.error(error_msg)
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": error_msg
+                        })
+            
+            except Exception as e:
+                error_msg = f"Sorry, I encountered an error: {str(e)}"
+                message_placeholder.error(error_msg)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": error_msg
+                })
         
-        try:
-            with st.spinner("Thinking..."):
-                response = requests.post(CHAT_API_URL, json=chat_request)
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    full_response = result["response"]
-                    
-                    # Display response incrementally
-                    message_placeholder.markdown(full_response + "▌")
-                    message_placeholder.markdown(full_response)
-                    
-                    # Add to chat history
-                    new_message = {"role": "assistant", "content": full_response}
-                    
-                    # Check if we need to show the travel form
-                    if "needs_more_info" in result and result["needs_more_info"]:
-                        st.session_state.show_form = True
-                    
-                    # Add any suggestions as quick replies
-                    if "suggestions" in result and result["suggestions"]:
-                        with st.container():
-                            st.write("Quick suggestions:")
-                            cols = st.columns(len(result["suggestions"]))
-                            for i, suggestion in enumerate(result["suggestions"]):
-                                with cols[i]:
-                                    if st.button(suggestion):
-                                        # Add the suggestion as a user message
-                                        st.session_state.messages.append({"role": "user", "content": suggestion})
-                                        st.rerun()
-                    
-                    st.session_state.messages.append(new_message)
-                
-                else:
-                    error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
-                    message_placeholder.error(error_msg)
-                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
-        
-        except Exception as e:
-            error_msg = f"Sorry, I encountered an error: {str(e)}"
-            message_placeholder.error(error_msg)
-            st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        else:  # Quick Search mode
+            message_placeholder.info("Please fill out the travel details below")
+            st.session_state.show_form = True
 
 # Travel details form (shown when needed)
 if st.session_state.show_form:
     with st.form(key="travel_details_form"):
-        st.subheader("✈️ Tell me more about your trip")
+        st.subheader("✈️ Travel Details")
         
-        cols = st.columns(2)
+        cols = st.columns([1, 1, 1])
         with cols[0]:
-            destination = st.text_input("Asian destination you want to visit", "Tokyo")
-            origin = st.text_input("Your departure city", "Jakarta")
+            origin = st.text_input("Departure City (IATA code)", "CGK")
+            destination = st.text_input("Destination City", "Tokyo")
+            adults = st.number_input("Adults", 1, 10, 2)
             
-            # Set default dates
-            today = datetime.now()
-            next_month = today + timedelta(days=30)
-            
-            travel_dates = st.date_input(
-                "When will you travel?",
-                (today, next_month),
-                format="MM/DD/YYYY"
-            )
-        
         with cols[1]:
-            interests = st.multiselect(
-                "What are you interested in?",
-                ["Cultural sites", "Beaches", "Shopping", "Food", "Nature", "Adventure"],
-                ["Cultural sites", "Food"]
-            )
+            today = datetime.now().date()
+            next_week = today + timedelta(days=7)
+            outbound_date = st.date_input("Departure Date", today)
+            return_date = st.date_input("Return Date", next_week)
+            children = st.number_input("Children", 0, 10, 0)
             
-            budget = st.select_slider(
-                "Your budget level",
-                options=["Budget", "Mid-range", "Luxury"],
-                value="Mid-range"
-            )
+        with cols[2]:
+            st.subheader("Preferences")
+            travel_class = st.selectbox("Class", ["Economy", "Premium Economy", "Business", "First"])
+            budget = st.slider("Budget Range (USD)", 0, 10000, (200, 2000))
+            min_rating = st.slider("Minimum Hotel Rating", 0.0, 5.0, 4.0, 0.5)
         
-        submitted = st.form_submit_button("Plan My Trip")
+        submitted = st.form_submit_button("🔍 Search for Options")
         
         if submitted:
-            if len(travel_dates) != 2:
-                st.error("Please select both departure and return dates")
+            if outbound_date >= return_date:
+                st.error("Return date must be after departure date")
             else:
-                # Prepare travel plan
-                travel_plan = {
-                    "destination": destination,
-                    "origin": origin,
-                    "departure_date": str(travel_dates[0]),
-                    "return_date": str(travel_dates[1]),
-                    "interests": interests,
-                    "budget": budget
-                }
-                
-                # Add to chat history
-                st.session_state.messages.append({
-                    "role": "user",
-                    "content": f"I want to visit {destination} from {travel_dates[0]} to {travel_dates[1]}. My interests are {', '.join(interests)} and my budget is {budget}."
-                })
-                
-                # Show assistant is thinking
-                with st.chat_message("assistant"):
-                    message_placeholder = st.empty()
-                    message_placeholder.markdown("Searching for the best Asian travel options...▌")
-                    
+                with st.spinner("Searching for travel options..."):
                     try:
-                        # Call API to get travel recommendations
-                        chat_request = {
-                            "conversation": st.session_state.messages,
-                            "current_input": json.dumps(travel_plan)
+                        # Prepare requests
+                        flight_request = {
+                            "origin": origin,
+                            "destination": destination,
+                            "outbound_date": str(outbound_date),
+                            "return_date": str(return_date)
                         }
                         
-                        response = requests.post(CHAT_API_URL, json=chat_request)
+                        hotel_request = {
+                            "location": destination,
+                            "check_in_date": str(outbound_date),
+                            "check_out_date": str(return_date),
+                            "min_rating": min_rating
+                        }
+                        
+                        # Make API call
+                        response = requests.post(
+                            COMPLETE_API_URL,
+                            json={
+                                "flight_request": flight_request,
+                                "hotel_request": hotel_request
+                            }
+                        )
                         
                         if response.status_code == 200:
                             result = response.json()
-                            full_response = result["response"]
                             
-                            # Display the response
-                            message_placeholder.markdown(full_response)
+                            # Format response
+                            response_text = f"Here are travel options for your trip to {destination}:\n\n"
+                            
+                            if result.get("flights") and isinstance(result["flights"], list):
+                                response_text += "**✈️ Flight Options:**\n"
+                                for flight in result["flights"][:3]:
+                                    response_text += (
+                                        f"- {flight.get('airline', 'Unknown')}: "
+                                        f"{flight.get('departure', 'N/A')} to {flight.get('arrival', 'N/A')} "
+                                        f"(Duration: {flight.get('duration', 'N/A')}, "
+                                        f"Price: ${flight.get('price', 'N/A')})\n"
+                                    )
+                            
+                            if result.get("hotels") and isinstance(result["hotels"], list):
+                                response_text += "\n**🏨 Hotel Options:**\n"
+                                for hotel in result["hotels"][:3]:
+                                    response_text += (
+                                        f"- {hotel.get('name', 'Unknown')}: "
+                                        f"${hotel.get('price', 'N/A')}/night, "
+                                        f"Rating: {hotel.get('rating', 'N/A')}\n"
+                                    )
+                            
+                            if result.get("ai_flight_recommendation"):
+                                response_text += f"\n**AI Flight Recommendation:**\n{result['ai_flight_recommendation']}\n"
+                            
+                            if result.get("ai_hotel_recommendation"):
+                                response_text += f"\n**AI Hotel Recommendation:**\n{result['ai_hotel_recommendation']}\n"
+                            
+                            if result.get("itinerary"):
+                                response_text += f"\n**📅 Suggested Itinerary:**\n{result['itinerary']}\n"
                             
                             # Add to chat history
-                            new_message = {"role": "assistant", "content": full_response}
+                            assistant_message = {
+                                "role": "assistant",
+                                "content": response_text
+                            }
                             
-                            # Add any data cards
-                            if "flights" in result:
-                                new_message["flights"] = result["flights"]
+                            # Add additional data if available
+                            if "flights" in result and result["flights"]:
+                                assistant_message["flights"] = result["flights"]
+                            if "hotels" in result and result["hotels"]:
+                                assistant_message["hotels"] = result["hotels"]
+                            if "destination_info" in result and result["destination_info"]:
+                                assistant_message["destination_info"] = result["destination_info"]
                             
-                            if "hotels" in result:
-                                new_message["hotels"] = result["hotels"]
-                            
-                            st.session_state.messages.append(new_message)
+                            st.session_state.messages.append(assistant_message)
                             st.session_state.show_form = False
                             st.rerun()
                         
                         else:
                             error_msg = f"Error: {response.json().get('detail', 'Unknown error')}"
-                            message_placeholder.error(error_msg)
-                            st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                            st.error(error_msg)
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": error_msg
+                            })
                     
                     except Exception as e:
-                        error_msg = f"Sorry, I encountered an error: {str(e)}"
-                        message_placeholder.error(error_msg)
-                        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                        error_msg = f"An error occurred: {str(e)}"
+                        st.error(error_msg)
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": error_msg
+                        })
